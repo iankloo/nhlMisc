@@ -1,0 +1,50 @@
+library(RCurl)
+library(RJSONIO)
+
+
+#--------scrape a ton of nhl game play by play
+
+season <- 20162017
+
+#---find the game id's
+url <- paste('http://live.nhl.com/GameData/SeasonSchedule-', season, '.json', sep = '')
+gameInfo <- getURL('http://live.nhl.com/GameData/SeasonSchedule-20162017.json')%>%
+  fromJSON() %>%
+  do.call(rbind, .) %>%
+  apply(., FUN = unlist, 2) %>%
+  as.data.frame(stringsAsFactors=FALSE)
+
+gameInfo[,'est'] <- as.POSIXct(gameInfo[,'est'], format = '%Y%m%d %T')
+
+#---scrape games before today
+#--limit to penguins games
+startDate <- min(gameInfo$est)
+endDate <- Sys.time()
+
+gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate & (gameInfo$a == 'PIT' | gameInfo$h == 'PIT'), c('id','est')]
+
+df <- data.frame(stringsAsFactors=FALSE)
+
+pb <- txtProgressBar(1,nrow(gameIDs), style = 3)
+count <- 1
+for(i in 1:nrow(gameIDs)){
+  gameParse <- paste('http://live.nhl.com/GameData/', season, '/', gameIDs[i, 'id'], '/PlayByPlay.json', sep = '') %>%
+    getURL() %>%
+    fromJSON()
+  plays <- gameParse[['data']][['game']][['plays']][['play']]
+  away <- gameParse[['data']][['game']][['awayteamname']]
+  home <- gameParse[['data']][['game']][['hometeamname']]
+  date <- gameIDs[i, 'est']
+
+  for(j in 1:length(plays)){
+    df <- rbind(df, data.frame(desc=as.character(plays[[j]]['desc']), type=as.character(plays[[j]]['type']), sweater=as.character(plays[[j]]['sweater']),
+                               time=as.character(plays[[j]]['time']), xcoord=as.character(plays[[j]]['xcoord']), ycoord=as.character(plays[[j]]['ycoord']), 
+                               period=as.character(plays[[j]]['period']), playerName=as.character(plays[[j]]['playername']), date=date, home=home, away=away,
+                               gameID=gameIDs[i, 'id'], stringsAsFactors=FALSE))
+  }
+  setTxtProgressBar(pb, count)
+  count <- count + 1
+}
+
+
+
