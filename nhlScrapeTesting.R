@@ -1,8 +1,8 @@
 library(RCurl)
 library(RJSONIO)
-
-
 #--------scrape a ton of nhl game play by play
+
+function(season = 20162017, )
 
 season <- 20162017
 
@@ -21,7 +21,9 @@ gameInfo[,'est'] <- as.POSIXct(gameInfo[,'est'], format = '%Y%m%d %T')
 startDate <- min(gameInfo$est)
 endDate <- Sys.time()
 
-gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate & (gameInfo$a == 'PIT' | gameInfo$h == 'PIT'), c('id','est')]
+#gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate & (gameInfo$a == 'PIT' | gameInfo$h == 'PIT'), c('id','est')]
+
+gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate, c('id','est')]
 
 df <- data.frame(stringsAsFactors=FALSE)
 
@@ -46,5 +48,4 @@ for(i in 1:nrow(gameIDs)){
   count <- count + 1
 }
 
-
-
+write.csv(df, 'playByPlay.csv', row.names = FALSE)
