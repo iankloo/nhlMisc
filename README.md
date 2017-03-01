@@ -4,7 +4,16 @@
 Scrape play-by-play from NHL games.
 
 ## Mini Project 2:
-Create spider web visualizations from players' statistics based on the play-by-play.  Will start with spider charts to visualize player "balance."
+Spider chart visualizations based on player stats.
 
 ## Mini Project 3:
-Text analysis of play-by-play?
+Visualization of events on the ice.  Possibly implemented in CartoDB map layer (like the NY Times Kobe shot visualization)
+
+## To Do:
+- Fix parser to find assists (not recorded as "events" by the tracker)
+- Fix parser to find saves (not recorded as "events" by the tracker)
+- Scrape data for back-years
+- Develop quicker function for updating this year's data
+- Fix parser to keep coordinates of events
+- Create interactive visualization for location on the ice (mini project 3)
+- Create an app displaying the results of mini projects 2 and 3
