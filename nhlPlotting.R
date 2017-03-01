@@ -1,12 +1,15 @@
-
-
 library(highcharter)
+library(tidyverse)
+library(htmltools)
+
+df <- read.csv('playByPlay.csv', stringsAsFactors = FALSE)
 
 #---make plot for single player
 player <- 'Brooks Orpik'
 
-playerSub <- df[df$playerName == player,]
-playerStats <- count(playerSub, 'type')
+playerStats <- df %>%
+  filter(playerName == player) %>%
+  count(vars = 'type')
 
 highchart() %>% 
   hc_chart(type = 'area', polar = TRUE) %>%
@@ -26,8 +29,9 @@ chart <- highchart() %>%
   hc_yAxis(gridLineInterpolation = 'polygon', lineWidth = '0', min = '0', endOnTick = FALSE)
 
 for(i in 1:length(players)){
-  playerSub <- df[df$playerName == players[i],]
-  playerStats <- count(playerSub, 'type')
+  playerStats <- df %>%
+    filter(playerName == players[i]) %>%
+    count(vars = 'type')
   
   chart <- chart %>% hc_add_series(name = players[i], data = playerStats$freq, pointPlacement = 'on', fillOpacity = .20, lineWidth = 0, marker = list(enabled = FALSE))
 }
@@ -43,18 +47,20 @@ types <- c('Shot', 'Hit', 'Goal', 'Fight', 'Penalty')
 exclude <- 'Fight'
 varNum <- 1
 chartList <- list()
-maxStart <- 0
+maxStat <- 0
 for(i in 1:length(players)){
-  playerSub <- df[df$playerName == players[i],]
-  playerStats <- count(playerSub, 'type')
+  playerStats <- df %>%
+    filter(playerName == players[i]) %>%
+    count(vars = 'type')
   
   if(max(playerStats$freq) > maxStat){
     maxStat <- max(playerStats$freq)
   }
 }
 for(i in 1:length(players)){
-  playerSub <- df[df$playerName == players[i],]
-  playerStats <- count(playerSub, 'type')
+  playerStats <- df %>%
+    filter(playerName == players[i]) %>%
+    count(vars = 'type')
   
   for(j in 1:length(types)) {
     if(!types[j] %in% playerStats$type){

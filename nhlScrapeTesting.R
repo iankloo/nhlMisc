@@ -2,13 +2,11 @@ library(RCurl)
 library(RJSONIO)
 #--------scrape a ton of nhl game play by play
 
-function(season = 20162017, )
-
-season <- 20162017
+season <- 20152016
 
 #---find the game id's
 url <- paste('http://live.nhl.com/GameData/SeasonSchedule-', season, '.json', sep = '')
-gameInfo <- getURL('http://live.nhl.com/GameData/SeasonSchedule-20162017.json')%>%
+gameInfo <- getURL(url)%>%
   fromJSON() %>%
   do.call(rbind, .) %>%
   apply(., FUN = unlist, 2) %>%
@@ -48,4 +46,4 @@ for(i in 1:nrow(gameIDs)){
   count <- count + 1
 }
 
-write.csv(df, 'playByPlay.csv', row.names = FALSE)
+write.csv(df, 'playByPlay20152016.csv', row.names = FALSE)
