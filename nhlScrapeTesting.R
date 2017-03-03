@@ -60,6 +60,15 @@ scrapeSeason <- function(season){
         cbind(est = gameIDs[i, 'est'])
     )
     
+    validTypes <- c('Shot', 'Hit', 'Goal', 'Fight', 'Penalty')
+    plays <- plays[plays$type %in% validTypes,]
+    
+    
+    if(length(unique(plays$type)) > 5){
+      print(i)
+      break
+    }
+    
     x[[i]] <- plays
     
     setTxtProgressBar(pb, count)
@@ -72,6 +81,7 @@ scrapeSeason <- function(season){
   dfNew
 }
 
+df <- scrapeSeason('20132014')
 
-
+write.csv(df, 'playByPlay20132014.csv', row.names = FALSE)
 
