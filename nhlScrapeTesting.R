@@ -1,49 +1,77 @@
 library(RCurl)
 library(RJSONIO)
+library(dplyr)
 #--------scrape a ton of nhl game play by play
 
-season <- 20152016
+setwd('C:/Users/iankl/Desktop/nhlMisc')
 
-#---find the game id's
-url <- paste('http://live.nhl.com/GameData/SeasonSchedule-', season, '.json', sep = '')
-gameInfo <- getURL(url)%>%
-  fromJSON() %>%
-  do.call(rbind, .) %>%
-  apply(., FUN = unlist, 2) %>%
-  as.data.frame(stringsAsFactors=FALSE)
+scrapeSeason <- function(season){
 
-gameInfo[,'est'] <- as.POSIXct(gameInfo[,'est'], format = '%Y%m%d %T')
-
-#---scrape games before today
-#--limit to penguins games
-startDate <- min(gameInfo$est)
-endDate <- Sys.time()
-
-#gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate & (gameInfo$a == 'PIT' | gameInfo$h == 'PIT'), c('id','est')]
-
-gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate, c('id','est')]
-
-df <- data.frame(stringsAsFactors=FALSE)
-
-pb <- txtProgressBar(1,nrow(gameIDs), style = 3)
-count <- 1
-for(i in 1:nrow(gameIDs)){
-  gameParse <- paste('http://live.nhl.com/GameData/', season, '/', gameIDs[i, 'id'], '/PlayByPlay.json', sep = '') %>%
-    getURL() %>%
-    fromJSON()
-  plays <- gameParse[['data']][['game']][['plays']][['play']]
-  away <- gameParse[['data']][['game']][['awayteamname']]
-  home <- gameParse[['data']][['game']][['hometeamname']]
-  date <- gameIDs[i, 'est']
-
-  for(j in 1:length(plays)){
-    df <- rbind(df, data.frame(desc=as.character(plays[[j]]['desc']), type=as.character(plays[[j]]['type']), sweater=as.character(plays[[j]]['sweater']),
-                               time=as.character(plays[[j]]['time']), xcoord=as.character(plays[[j]]['xcoord']), ycoord=as.character(plays[[j]]['ycoord']), 
-                               period=as.character(plays[[j]]['period']), playerName=as.character(plays[[j]]['playername']), date=date, home=home, away=away,
-                               gameID=gameIDs[i, 'id'], stringsAsFactors=FALSE))
+  season <- season
+  
+  
+  #---find the game id's
+  url <- paste('http://live.nhl.com/GameData/SeasonSchedule-', season, '.json', sep = '')
+  gameInfo <- getURL(url)%>%
+    fromJSON() %>%
+    do.call(rbind, .) %>%
+    apply(., FUN = unlist, 2) %>%
+    as.data.frame(stringsAsFactors=FALSE)
+  
+  gameInfo[,'est'] <- as.POSIXct(gameInfo[,'est'], format = '%Y%m%d %T')
+  
+  #---scrape games before today
+  startDate <- min(gameInfo$est)
+  if(max(gameInfo$est) > Sys.time()){
+    endDate <- Sys.time()
+  } else{
+    endDate <- max(gameInfo$est)
   }
-  setTxtProgressBar(pb, count)
-  count <- count + 1
+  
+  #gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate & (gameInfo$a == 'PIT' | gameInfo$h == 'PIT'), c('id','est')]
+  
+  gameIDs <- gameInfo[gameInfo$est >= startDate & gameInfo$est < endDate, c('id','est')]
+  
+  x <- vector(mode="list", nrow(gameIDs))
+  pb <- txtProgressBar(1,nrow(gameIDs), style = 3)
+  count <- 1
+  errorCount <- 0
+  for(i in 1:nrow(gameIDs)){
+    tryCatch({
+      gameParse <- paste('http://live.nhl.com/GameData/', season, '/', gameIDs[i, 'id'], '/PlayByPlay.json', sep = '') %>%
+        getURL() %>%
+        fromJSON()
+    },error=function(e){
+      cat("ERROR :",conditionMessage(e), "\n")
+      errorCount <<- errorCount + 1
+    })
+    
+    if(length(gameParse[['data']][['game']][['plays']][['play']]) == 0){
+      next
+    }
+    
+    suppressWarnings(
+      plays <- gameParse[['data']][['game']][['plays']][['play']] %>%
+        Reduce(rbind,.) %>%
+        data.frame() %>%
+        select(sweater, desc, type, playername, p1name, p2name, p3name, time, period, xcoord, ycoord) %>%
+        cbind(awayTeam = gameParse[['data']][['game']][['awayteamname']]) %>%
+        cbind(homeTeam = gameParse[['data']][['game']][['hometeamname']]) %>%
+        cbind(est = gameIDs[i, 'est'])
+    )
+    
+    x[[i]] <- plays
+    
+    setTxtProgressBar(pb, count)
+    count <- count + 1
+  }
+  
+  dfNew <- do.call('rbind', x)
+  dfNew <- data.frame(lapply(dfNew, as.character), stringsAsFactors=FALSE)
+  print(paste(errorCount, 'errors'))
+  dfNew
 }
 
-write.csv(df, 'playByPlay20152016.csv', row.names = FALSE)
+
+
+

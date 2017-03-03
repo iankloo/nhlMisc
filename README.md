@@ -7,12 +7,11 @@ Scrape play-by-play from NHL games.
 Spider chart visualizations based on player stats.
 
 ## Mini Project 3:
-Visualization of events on the ice.  Possibly implemented in CartoDB map layer (like the NY Times Kobe shot visualization)
+Visualization of events on the ice.  Possibly implemented in CartoDB map layer (like the LA Times Kobe shot visualization)
 
 ## To Do:
 - Fix parser to find assists (not recorded as "events" by the tracker)
 - Fix parser to find saves (not recorded as "events" by the tracker)
-- Scrape data for back-years
 - Develop quicker function for updating this year's data
 - Fix parser to keep coordinates of events
 - Create interactive visualization for location on the ice (mini project 3)
