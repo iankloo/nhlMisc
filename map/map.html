@@ -1,0 +1,110 @@
+<link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
+<script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+
+<style>
+  #tooltipdiv {
+      position: absolute;
+      z-index: 10000;
+      opacity:0;
+      background: white;
+      padding: 10px;
+      border-style:solid;
+      border-width:1px;
+      border-color:#D4D4D4;
+      box-shadow: 2px 2px 2px rgba(64,64,64,0.3);
+      -moz-box-shadow: 2px 2px 2px rgba(64,64,64,0.3);
+      -webkit-box-shadow: 2px 2px 2px rgba(64,64,64,0.3);
+      border-radius: 2px;
+      -moz-border-radius: 2px;
+      font-family: Helvetica, Arial, sans-serif;
+      max-width: 300px;
+    }
+    #tooltipdiv p{
+      font-family: "Benton Gothic Regular";
+      font-size: 14px;
+      line-height: 1em;
+      margin-top: 0;
+      margin-bottom: 4px;
+    }
+    
+    #mapid {
+      cursor: default;
+    }
+</style>
+
+
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+
+<div id="tooltipdiv" style="opacity:0;height:0;">
+        <p id="desc"></p>
+</div>
+<script>
+
+  var windowWidth = document.documentElement.clientWidth;
+
+  var cssString = "#hockeymap{\
+    marker-fill-opacity: 0.4;\
+    marker-line-color: #FFF;\
+    marker-line-width: 1;\
+    marker-line-opacity: 0;\
+    marker-placement: point;\
+    marker-type: ellipse;\
+    marker-width: 8;\
+    marker-allow-overlap: true;\
+  }";
+
+	var mymap = L.map('mapid').setView([0, 0], 2);
+
+	L.tileLayer('http://www.jeffreythompson.org/blog/wp-content/uploads/2012/11/AllWhiteFrame_FamilyGuy_Sea9Ep18-web.png').addTo(mymap);
+	
+	cartodb.createLayer(mymap, {
+	  user_name: 'iankloo',
+	  type: 'cartodb',
+	  sublayers: [{
+	    sql: "SELECT * FROM hockeymap WHERE type = 'Goal' AND playername = 'Sidney Crosby'",
+	    cartocss: cssString,
+	    interactivity: 'type, playername, _desc'
+	  }]
+	}).done(function(layer) {
+        layer.setInteraction(true);
+        
+        layer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
+            subLayerName = layer.layers[subLayerIndex].options.layer_name;
+            //console.log(data)
+            // regular tooltips
+            $("#desc").html(data._desc);
+
+
+            $("#tooltipdiv").css("height","auto").css("opacity","1");
+
+        })
+        .on('featureOut', function(e, latlng, pos, data, subLayerIndex) {
+            $("#tooltipdiv").css("opacity","0");
+        });
+        
+        $(window).mousemove( function(e) {
+        mouseY = e.pageY;
+        mouseX = (e.pageX < 125) ? 125 : (e.pageX > windowWidth-150) ? windowWidth-150 : e.pageX;
+        $("#tooltipdiv").css("top",(mouseY+20)+"px").css("left",(mouseX)+"px");
+    });
+    
+    
+    $('html').mouseover(function() {
+        $("#tooltipdiv").css("opacity","0").css("height","0");
+    });
+    $('.leaflet-container').mouseover(function(event){
+        event.stopPropagation();
+    });
+
+    // hide tool tip when scrollin
+    window.onscroll = function (e) {
+        $("#tooltipdiv").css("opacity","0").css("height","0");
+    }
+	})
+	
+	
+	
+	.addTo(mymap)
+
+</script>
+
