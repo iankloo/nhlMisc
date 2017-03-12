@@ -28,6 +28,6 @@ Cartodb integration is finished.  The LA Times group shared their code for their
 - Add controls to filter and choose layers
 - Develop quicker function for updating this year's data
 - Tie the update function to the app (i.e., parse and load into Carto)
-~~- Fix parser to keep coordinates of events~~
+- ~~Fix parser to keep coordinates of events~~
 - Create an app displaying the results of mini projects 2 and 3
 
