@@ -38,8 +38,11 @@
     }
 </style>
 
-
-<div id="mapid" style="width: 600px; height: 400px;"></div>
+<div style="text-align: center;">
+  <h1>Hockey Map Development</h1>
+</div>
+<br><br>
+<div id="mapid" style="width: 570px; height: 270px; margin: auto;"></div>
 
 <div id="tooltipdiv" style="opacity:0;height:0;">
         <p id="desc"></p>
@@ -49,20 +52,32 @@
   var windowWidth = document.documentElement.clientWidth;
 
   var cssString = "#hockeymap{\
-    marker-fill-opacity: 1;\
+    marker-fill-opacity: .90;\
     marker-line-color: #FFF;\
     marker-line-width: 1;\
     marker-line-opacity: 0;\
     marker-placement: point;\
     marker-type: ellipse;\
-    marker-width: 8;\
+    marker-width: 9;\
     marker-allow-overlap: true;\
+    [type = 'Goal']{\
+      marker-fill: #e7298a;\
+      marker-opacity: 1;\
+    }\
+    [type = 'Shot']{\
+      marker-fill: #4d4d4d;\
+    }\
   }";
 
 	var mymap = L.map('mapid').setView([0, 0], 2);
 	
 
-	L.tileLayer('http://www.jeffreythompson.org/blog/wp-content/uploads/2012/11/AllWhiteFrame_FamilyGuy_Sea9Ep18-web.png').addTo(mymap);
+/*	L.tileLayer('http://www.jeffreythompson.org/blog/wp-content/uploads/2012/11/AllWhiteFrame_FamilyGuy_Sea9Ep18-web.png').addTo(mymap);*/
+	
+	L.tileLayer('file:///C:/Users/iankl/Desktop/nhlMisc/map/rinkMap/{z}/{x}/{y}.png', {
+        maxZoom: 6,
+        tms: false,
+      }).addTo(mymap);
 	
 /*  mymap.createPane('labels');
 
@@ -73,8 +88,8 @@
   }).addTo(mymap)
   */
 			
-	L.imageOverlay('rink.png', [[-42.5,-100], [42.5, 100]]).addTo(mymap);
-	
+/*	L.imageOverlay('rink.png', [[-42.5,-100], [42.5, 100]]).addTo(mymap);
+*/	
 	mymap.setMaxBounds([[-42.5,-100], [42.5, 100]]);
 
 	
@@ -82,7 +97,7 @@
 	  user_name: 'iankloo',
 	  type: 'cartodb',
 	  sublayers: [{
-	    sql: "SELECT * FROM hockeymap_1 WHERE type = 'Goal' AND playername = 'Sidney Crosby'",
+	    sql: "SELECT * FROM hockeymap_1 WHERE (type = 'Goal' OR type = 'Shot') AND playername = 'Sidney Crosby'",
 	    cartocss: cssString,
 	    interactivity: 'type, playername, _desc'
 	  }]
