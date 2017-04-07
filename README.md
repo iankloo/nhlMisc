@@ -6,6 +6,9 @@ Scrape play-by-play from NHL games.
 ### Update
 Finished basic functionality after fixing major bugs in first version.  All seasons back to 20112012, including the current season, have been scraped and verified using this script.
 
+### Update 2
+Successfully loaded to CartoDB.  Not sure if there is going to be an easy way to update the code without a Carto license (which is how you can get API access that would allow me to run the ETL from R into CartoDB).  For now, might have to deal with static data that is updated manually.
+
 ## Mini Project 2:
 Spider chart visualizations based on player stats.
 
@@ -18,6 +21,8 @@ Visualization of events on the ice.  Possibly implemented in CartoDB map layer (
 ### Update
 Cartodb integration is finished.  The LA Times group shared their code for their leaflet/carto integration, so I've been working off of that.  Initial results are good - see the to do section to see what needs to be done still.
 
+### Update 2
+Needed to build out the ice on CartoDB - not trivial given the shape of an ice rink and number of important lines to include.  Instead of drawing with polylines, I created a map layer by georeferencing a .PNG of hockey ice.  I then converted it to a leaflet map layer using Maptiler.  The result is pretty cool.
 
 ## To Do:
 - Fix parser to find assists (not recorded as "events" by the tracker)
