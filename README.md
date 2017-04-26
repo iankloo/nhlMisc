@@ -27,12 +27,15 @@ Needed to build out the ice on CartoDB - not trivial given the shape of an ice r
 ## To Do:
 - Fix parser to find assists (not recorded as "events" by the tracker)
 - Fix parser to find saves (not recorded as "events" by the tracker)
+- Pass years to Carto
+- Add filter for years on page
+- Rebuild map layer to force for better size behavior
+- Recode lat/lon to meet the new size
 - ~~Make NHL ice using polylines in leaflet~~
 - ~~Fix data that was loaded into Carto as a test~~
 - ~~Add layers for each "type"~~
-- Add controls to filter and choose layers
+- ~~Add controls to filter and choose layers~~
 - Develop quicker function for updating this year's data
 - Tie the update function to the app (i.e., parse and load into Carto)
 - ~~Fix parser to keep coordinates of events~~
 - Create an app displaying the results of mini projects 2 and 3
-

@@ -1,6 +1,6 @@
 <link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
 <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
-
+<script src='js/typeahead.js'></script>
 
 
 
@@ -32,7 +32,7 @@
       margin-top: 0;
       margin-bottom: 4px;
     }
-    
+
     #mapid {
       cursor: default;
     }
@@ -42,11 +42,88 @@
   <h1>Hockey Map Development</h1>
 </div>
 <br><br>
-<div id="mapid" style="width: 570px; height: 270px; margin: auto;"></div>
+<div id="mapid" style="width: 50%; height: 50%; margin: auto;"></div>
 
 <div id="tooltipdiv" style="opacity:0;height:0;">
         <p id="desc"></p>
 </div>
+
+<button type="button" class="btn btn-default" id='runQuery'>Update</button>
+
+<input id = 'playerName' class="typeahead" type="text" placeholder="Enter Player Name">
+
+<div class="checkbox">
+  <label><input class='selectBox' type="checkbox" value="Goal" checked='checked'>Goals</label>
+</div>
+<div class="checkbox">
+  <label><input class='selectBox' type="checkbox" value="Shot">Shots</label>
+</div>
+<div class="checkbox">
+  <label><input class='selectBox' type="checkbox" value="Hit">Hit</label>
+</div>
+<div class="checkbox">
+  <label><input class='selectBox' type="checkbox" value="Penalty">Penalty</label>
+</div>
+<div class="checkbox">
+  <label><input class='selectBox' type="checkbox" value="Fight">Fight</label>
+</div>
+
+
+<script>
+
+  var sql = new cartodb.SQL({ user: 'iankloo' });
+
+sql.execute("SELECT DISTINCT playername FROM hockeymap_all")
+  .done(function(data) {
+    var player = data.rows.map(function(d){ return d.playername;});
+
+    $('.typeahead').typeahead({
+      hint: true,
+      highlight: true,
+      minLength: 1
+    },
+    {
+      name: 'player',
+      source: substringMatcher(player)
+    });
+
+    console.log('done')
+
+  })
+  .error(function(errors) {
+    // errors contains a list of errors
+    console.log("errors:" + errors);
+  })
+
+
+  var substringMatcher = function(strs) {
+    return function findMatches(q, cb) {
+      var matches, substringRegex;
+
+      // an array that will be populated with substring matches
+      matches = [];
+
+      // regex used to determine if a string contains the substring `q`
+      substrRegex = new RegExp(q, 'i');
+
+      // iterate through the pool of strings and for any string that
+      // contains the substring `q`, add it to the `matches` array
+      $.each(strs, function(i, str) {
+        if (substrRegex.test(str)) {
+          matches.push(str);
+        }
+      });
+
+      cb(matches);
+    };
+  };
+
+
+
+
+
+</script>
+
 <script>
 
   var windowWidth = document.documentElement.clientWidth;
@@ -69,16 +146,12 @@
     }\
   }";
 
-	var mymap = L.map('mapid').setView([0, 0], 2);
-	
+
 
 /*	L.tileLayer('http://www.jeffreythompson.org/blog/wp-content/uploads/2012/11/AllWhiteFrame_FamilyGuy_Sea9Ep18-web.png').addTo(mymap);*/
-	
-	L.tileLayer('file:///C:/Users/iankl/Desktop/nhlMisc/map/rinkMap/{z}/{x}/{y}.png', {
-        maxZoom: 6,
-        tms: false,
-      }).addTo(mymap);
-	
+
+
+
 /*  mymap.createPane('labels');
 
 	mymap.getPane('labels').style.zIndex = -100;
@@ -87,55 +160,87 @@
     pane: 'labels'
   }).addTo(mymap)
   */
-			
+
 /*	L.imageOverlay('rink.png', [[-42.5,-100], [42.5, 100]]).addTo(mymap);
-*/	
-	mymap.setMaxBounds([[-42.5,-100], [42.5, 100]]);
+*/
 
-	
-	cartodb.createLayer(mymap, {
-	  user_name: 'iankloo',
-	  type: 'cartodb',
-	  sublayers: [{
-	    sql: "SELECT * FROM hockeymap_1 WHERE (type = 'Goal' OR type = 'Shot') AND playername = 'Sidney Crosby'",
-	    cartocss: cssString,
-	    interactivity: 'type, playername, _desc'
-	  }]
-	}).done(function(layer) {
-        layer.setInteraction(true);
-        layer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
-            subLayerName = layer.layers[subLayerIndex].options.layer_name;
-            //console.log(data)
-            // regular tooltips
-            $("#desc").html(data._desc);
+	var sqlStart = "SELECT * FROM hockeymap_all WHERE (type = 'Goal' OR type = 'Shot') AND playername = 'Evgeni Malkin'"
+
+	$("#runQuery").click(function(){
+	  mymap.remove()
+    var filterList = []
+    $(".selectBox:checked").each(function() {
+      test = (this.checked ? $(this).val(): '')
+      testNew = 'type = ' + "'"+test+"'"
+      console.log(testNew)
+      filterList.push(testNew);
+    })
+    var filterForQry = filterList.join(' OR ')
+
+    var sqlOut = "SELECT * FROM hockeymap_all WHERE playername = '" + $("#playerName").val() + "' AND ("+ filterForQry+")"
+    console.log(sqlOut)
+	  makeMap(sqlOut)
+	})
+
+	makeMap(sqlStart)
 
 
-            $("#tooltipdiv").css("height","auto").css("opacity","1");
 
-        })
-        .on('featureOut', function(e, latlng, pos, data, subLayerIndex) {
-            $("#tooltipdiv").css("opacity","0");
-        });
-        
-        $(window).mousemove( function(e) {
-        mouseY = e.pageY;
-        mouseX = (e.pageX < 125) ? 125 : (e.pageX > windowWidth-150) ? windowWidth-150 : e.pageX;
-        $("#tooltipdiv").css("top",(mouseY+20)+"px").css("left",(mouseX)+"px");
-    });
-    
-    
-    $('html').mouseover(function() {
-        $("#tooltipdiv").css("opacity","0").css("height","0");
-    });
-    $('.leaflet-container').mouseover(function(event){
-        event.stopPropagation();
-    });
+	function makeMap(sqlStatement){
 
-    // hide tool tip when scrollin
-    window.onscroll = function (e) {
-        $("#tooltipdiv").css("opacity","0").css("height","0");
-    }
-	}).addTo(mymap)
+  	mymap = L.map('mapid').setView([0, 0], 2);
+
+  	L.tileLayer('file:///C:/Users/iankl/Desktop/nhlMisc/map/rinkMap/{z}/{x}/{y}.png', {
+          maxZoom: 6,
+          tms: false,
+        }).addTo(mymap);
+
+  	mymap.setMaxBounds([[-42.5,-100], [42.5, 100]]);
+
+
+  	cartodb.createLayer(mymap, {
+  	  user_name: 'iankloo',
+  	  type: 'cartodb',
+  	  sublayers: [{
+  	    sql: sqlStatement,
+  	    cartocss: cssString,
+  	    interactivity: 'type, playername, _desc'
+  	  }]
+  	}).done(function(layer) {
+          layer.setInteraction(true);
+          layer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
+              subLayerName = layer.layers[subLayerIndex].options.layer_name;
+              //console.log(data)
+              // regular tooltips
+              $("#desc").html(data._desc);
+
+
+              $("#tooltipdiv").css("height","auto").css("opacity","1");
+
+          })
+          .on('featureOut', function(e, latlng, pos, data, subLayerIndex) {
+              $("#tooltipdiv").css("opacity","0");
+          });
+
+          $(window).mousemove( function(e) {
+          mouseY = e.pageY;
+          mouseX = (e.pageX < 125) ? 125 : (e.pageX > windowWidth-150) ? windowWidth-150 : e.pageX;
+          $("#tooltipdiv").css("top",(mouseY+20)+"px").css("left",(mouseX)+"px");
+      });
+
+
+      $('html').mouseover(function() {
+          $("#tooltipdiv").css("opacity","0").css("height","0");
+      });
+      $('.leaflet-container').mouseover(function(event){
+          event.stopPropagation();
+      });
+
+      // hide tool tip when scrollin
+      window.onscroll = function (e) {
+          $("#tooltipdiv").css("opacity","0").css("height","0");
+      }
+  	}).addTo(mymap)
+	}
 
 </script>
-
