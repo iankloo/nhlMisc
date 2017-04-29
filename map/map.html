@@ -39,10 +39,31 @@
 </style>
 
 <div style="text-align: center;">
-  <h1>Hockey Map Development</h1>
+  <h1>Map of NHL Events Since 2005 (by Player)</h1>
 </div>
-<br><br>
-<div id="mapid" style="width: 50%; height: 50%; margin: auto;"></div>
+<div style="margin-left: 15%; margin-right: 15%">
+  <p>
+    This map was built from the play-by-play data that the NHL makes freely available.  The data
+    is updated every day (that there is hockey) and ostensibly contains all of the "geocoded" events
+    in a hockey game.
+  </p>
+  <p>
+    There are too many events to make a visualization of all of them at once mean anything.  Instead,
+     you can filter by player, event type, and season. The events are color coded by event type and you
+     can get more information by hovering over an event.
+  </p>
+  <p>
+    This visualization was inspired by the Latimes visualization of all of Kobe Bryant's career shots.
+    The reason this is so interesting is that rendering hundreds, or even many thousands, of nodes on a
+    web page is non-trivial (just try to do something like this in D3 and you'll see what I mean).  So,
+    the Latimes crew found an interesting solution: render everything as a map layer.  This works so well
+     beacause maps naturally have to show tons of data, so there are hard-coded workarounds that make this doable.
+     Not only is the end result able to render a huge amount of nodes, but it is able to maintain interactivity
+     without any lag!  Pretty cool.
+  </p>
+
+</div>
+<div id="mapid" style="width: 682px; height: 340px; margin: auto;"></div>
 
 <div id="tooltipdiv" style="opacity:0;height:0;">
         <p id="desc"></p>
@@ -188,14 +209,18 @@ sql.execute("SELECT DISTINCT playername FROM hockeymap_all")
 
 	function makeMap(sqlStatement){
 
-  	mymap = L.map('mapid').setView([0, 0], 2);
+  	mymap = L.map('mapid', {zoomControl: false}).setView([0, 0], 2);
+    mymap.dragging.disable();
+    mymap.touchZoom.disable();
+    mymap.doubleClickZoom.disable();
+    mymap.scrollWheelZoom.disable();
 
-  	L.tileLayer('file:///C:/Users/iankl/Desktop/nhlMisc/map/rinkMap/{z}/{x}/{y}.png', {
+  	L.tileLayer('file:///C:/Users/iankl/Desktop/nhlMisc/map/rinkMapHalfScale/{z}/{x}/{y}.png', {
           maxZoom: 6,
           tms: false,
         }).addTo(mymap);
 
-  	mymap.setMaxBounds([[-42.5,-100], [42.5, 100]]);
+  	mymap.setMaxBounds([[-51,-120], [51, 120]]);
 
 
   	cartodb.createLayer(mymap, {
